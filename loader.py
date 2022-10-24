@@ -3,11 +3,16 @@ from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher.filters.state import StatesGroup, State
 from config import bot_token
 import logging
+from fpdf import FPDF
 
 bot = Bot(token=bot_token)
 logging.basicConfig(level=logging.INFO)
 dp= Dispatcher(bot, storage=MemoryStorage())
 html= types.ParseMode.HTML#<- &lt; >- &gt; &- &amp;
+pdf= FPDF()
+pdf.add_page()
+pdf.add_font('DejaVu', '' ,'font/DejaVuSans.ttf', uni=True )
+pdf.set_font('DejaVu', size=14)
 
 class Form(StatesGroup):
     Q1= State()
@@ -20,3 +25,4 @@ class Form(StatesGroup):
     Q8= State()
     Q9= State()
     Q10= State()
+    Q11= State()

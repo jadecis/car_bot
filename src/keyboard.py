@@ -1,7 +1,6 @@
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from threading import main_thread
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup
 
-start_markup= InlineKeyboardMarkup()
-start_markup.add(InlineKeyboardButton("НАЧАТЬ", callback_data="start"))
 
 
 def persent_markup():
@@ -15,6 +14,18 @@ def persent_markup():
 problem_markup= InlineKeyboardMarkup(row_width=2)
 
 problem_markup.add(
-    InlineKeyboardButton("Да", callback_data="prob_yes"),
-    InlineKeyboardButton("Нет", callback_data="prob_no")
+    InlineKeyboardButton("Yes", callback_data="prob_yes"),
+    InlineKeyboardButton("No", callback_data="prob_no")
 )
+
+accept_menu= InlineKeyboardMarkup(row_width=2)
+accept_menu.add(
+    InlineKeyboardButton('✅ Submit', callback_data='accept_accept'),
+    InlineKeyboardButton('✏️ Change', callback_data='accept_cancel')
+)
+
+next_button = ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
+next_button.add('Next')
+
+main_button= ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
+main_button.add('Pick Up 🆙')
