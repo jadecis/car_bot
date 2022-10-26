@@ -1,2 +1,3 @@
-bot_token="5656808084:AAENeNaIXNFm7n8eL0WT5ySnoUWebOacccA"
-admin_chat= '-818221661'#
+bot_token=""
+admin_chat_сar= ''
+admin_chat_del= ''#

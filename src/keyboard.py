@@ -27,5 +27,5 @@ accept_menu.add(
 next_button = ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
 next_button.add('Next')
 
-main_button= ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
-main_button.add('Pick Up 🆙')
+main_menu= ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
+main_menu.add('Delivery 🚚', 'Pick Up 🆙')
