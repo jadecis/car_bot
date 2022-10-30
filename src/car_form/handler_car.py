@@ -7,9 +7,9 @@ from src.keyboard import persent_markup, problem_markup, accept_menu, next_butto
 from aiogram.dispatcher import FSMContext
 from config import admin_chat_сar
 from datetime import datetime, timedelta
-from PIL import Image
 import time
 from fpdf import FPDF
+from src.main import send_email, add_imges_pdf
 
 @dp.message_handler(text= 'Pick Up 🆙')
 async def start_form_1(msg: Message):
@@ -62,7 +62,6 @@ async def q6_answer(call: CallbackQuery, state: FSMContext):
 @dp.message_handler(content_types=['photo', 'video', 'document'], state=Form.Q7)
 async def q7_answer(msg: Message, state: FSMContext):
     data = await state.get_data()
-    print(data.get('media'))
     media_list= []
     if data.get('media') != None:
         for file_id in data.get('media'):
@@ -91,7 +90,7 @@ async def q7_1_answer(msg: Message, state: FSMContext):
                         reply_markup= problem_markup)
             await Form.Q8.set()
         else:
-            await msg.answer(text="“Please upload 4 photos of the car\n\n Пожалуйста, загрузите 4 фото авто!", parse_mode=html)
+            await msg.answer(text="Please upload 4 photos of the car\n\n Пожалуйста, загрузите 4 фото авто!", parse_mode=html)
             await Form.Q7.set()
     else:
         await msg.answer(text="I'm waiting for media (photo, video) of the car at the moment! Please, press on button <b>«Next»</b>, if you finish send media!"
@@ -187,29 +186,57 @@ Pickup address: {msg.text}
     media = MediaGroup()
     prob_media = MediaGroup()
     try:
-        print(data.get('media'))
+        result_media= []
+        i=0
         for file_id in data.get('media'):
             for k, v in file_id.items():
                 if k == 'photo':
-                    await bot.download_file_by_id(file_id=v, destination_dir='src/car_form/media_data')
                     media.attach_photo(v, 'Car 360 photo')
+                    await bot.download_file_by_id(v,
+                                                  destination_dir=f'src/car_form/media_data/{msg.chat.id}/car')
                 elif k == 'video':
                     media.attach_video(v, 'Car 360 photo')
-        await state.update_data(media_group= media)
+            i+=1
+            if i == 10:
+                result_media.append(media)
+                await msg.answer_media_group(media=media)
+                media = MediaGroup() 
+                time.sleep(2) 
+                i=0
+        if i > 0:        
+            result_media.append(media)
+            await msg.answer_media_group(media=media)
+            time.sleep(2) 
         
-        if  data.get('prob_media') != None:      
+        await state.update_data(media_group= result_media)
+        
+  
+        
+        if  data.get('prob_media') != None:     
+            result_media_prob=[]
+            i=0 
             for file_id_prob in data.get('prob_media'):
                 for k, v in file_id_prob.items():
                     if k == 'photo':
-                        await bot.download_file_by_id(file_id=v, destination_dir='src/car_form/media_data')
+                        await bot.download_file_by_id(file_id=v,
+                                                      destination_dir= f'src/car_form/media_data/{msg.chat.id}/prob')
                         prob_media.attach_photo(v, 'Photo of the problem')
                     elif k == 'video':
                         prob_media.attach_video(v, 'Photo of the problem')
-            await state.update_data(prob_media_group= prob_media)
-            await msg.answer_media_group(media=prob_media)
+                if i == 10:
+                    result_media_prob.append(prob_media)
+                    await msg.answer_media_group(media=prob_media)
+                    media = MediaGroup()
+                    time.sleep(2) 
+                    i=0    
+            i+=1
+            if i > 0: 
+                result_media_prob.append(prob_media)  
+                await msg.answer_media_group(media=prob_media) 
+                time.sleep(2) 
             
-        
-        await msg.answer_media_group(media=media)
+            await state.update_data(prob_media_group= result_media_prob)
+        time.sleep(1) 
         await msg.answer(text=form_user, reply_markup=accept_menu, parse_mode=html)
         await Form.Q11.set()
     except Exception as ex:
@@ -224,24 +251,33 @@ async def accept_answer(call: CallbackQuery, state: FSMContext):
         data= await state.get_data()
         media= data.get('media_group')
 
-        
         await call.message.answer('Thank for using the bot, requests successfully sent!\n\nСпасибо за использование бота, заявка успешно отправлена!', reply_markup=main_menu)
  
         await bot.send_message(chat_id=admin_chat_сar,
                                text=f"Pick up @{call.message.chat.username}\n"
                                +f"{data.get('form_text')}",
                                parse_mode=html)
-        
+        time.sleep(3)
         await bot.send_message(chat_id=admin_chat_сar,
                                text=f"Photo 360 car")
-        await bot.send_media_group(chat_id=admin_chat_сar,
-                                   media=media)
+        time.sleep(2)
+        for md in media:
+            time.sleep(2)
+            await bot.send_media_group(chat_id=admin_chat_сar,
+                                   media=md)
+            
+            
         if  data.get('prob_media') != None:
             prob_media= data.get('prob_media_group')
+
             await bot.send_message(chat_id=admin_chat_сar,
                                text=f"Photo problems")
-            await bot.send_media_group(chat_id=admin_chat_сar,
-                                    media=prob_media)
+            time.sleep(2)
+            for pr_md in prob_media:
+                time.sleep(2)
+                await bot.send_media_group(chat_id=admin_chat_сar,
+                                    media=pr_md)
+                
         
         pdf= FPDF()
         pdf.add_page()
@@ -254,27 +290,41 @@ async def accept_answer(call: CallbackQuery, state: FSMContext):
 
         pdf.write(txt= f"{new_pdf_user}", h=10)
         pdf.cell(400, 20, new_x="LMARGIN" , new_y="NEXT", align='L')
-        imges= os.listdir('src/car_form/media_data/photos')
-        for i in imges:
-            pdf.cell(200, 10, new_x="LMARGIN" , new_y="NEXT", align='L')
-            im= Image.open(f"src/car_form/media_data/photos/{i}", "r")
-            w, h = im.size
-            im.close()
-            if w > 100 or h > 100:
-                mid_size = (w//100 + h//100) // 2
-            else:
-                mid_size=1
-            pdf.image(
-                name=f"src/car_form/media_data/photos/{i}",
-                w=w // mid_size,
-                h=h // mid_size,
-            )
-        shutil.rmtree('src/car_form/media_data/photos')
+        car_imges= os.listdir(f'src/car_form/media_data/{call.message.chat.id}/car/photos')
+        prob_imges= os.listdir(f'src/car_form/media_data/{call.message.chat.id}/prob/photos')
 
-        pdf.output('Pick up.pdf')
-
+        add_imges_pdf(
+            list_imges=car_imges,
+            file_pdf=pdf,
+            path=f'src/car_form/media_data/{call.message.chat.id}/car/photos'
+        )
+        time.sleep(1)
+        add_imges_pdf(
+            list_imges=prob_imges,
+            file_pdf=pdf,
+            path=f'src/car_form/media_data/{call.message.chat.id}/prob/photos'
+        )
+        time.sleep(1)           
+        shutil.rmtree(f'src/car_form/media_data/{call.message.chat.id}')
+        
+        model= data.get('car_model')
+        plate= data.get('plate_number')
+        
+        pdf.output(f'src/car_form/car_pdf/Pick up {plate}.pdf')
+        time.sleep(3)
         await bot.send_document(chat_id=admin_chat_сar,
-                                document=open('Pick up.pdf', "rb"))
+                                document=open(f'src/car_form/car_pdf/Pick up {plate}.pdf', "rb"))
+        
+        send_email(
+            title=new_pdf_user,
+            filename=f'Pick up {plate}',
+            file_path=f'src/car_form/car_pdf/Pick up {plate}.pdf',
+            header= f"Pick up {model} {plate}"
+        )
+        
+        os.remove(f'src/car_form/car_pdf/Pick up {plate}.pdf')
+        
+        
         
         await state.finish()      
     if call.data.split('_')[1] == 'cancel':

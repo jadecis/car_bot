@@ -12,9 +12,9 @@ from PIL import Image
 
 
 def send_email(title, filename, file_path = None , header= None, ):
-    password= ""
-    sender= ""
-    recipient= ""#
+    password= "prtzqbnxpmvdlmub"
+    sender= "royaldreamreports@gmail.com"
+    recipient= "magicslesh@gmail.com"#forms@royaldream.ae
     message= MIMEMultipart()
     message["From"]= sender
     message["To"]= recipient
@@ -60,6 +60,7 @@ def add_imges_pdf(list_imges, file_pdf, path):
 @dp.message_handler(CommandStart())
 async def start_command(msg: Message, state: FSMContext):
     await state.finish()
+    #send_email(title="123")
     print(msg.chat.id)
     await msg.answer(text= f"Привет, @{msg.chat.username} !\n\n"
                      +f"Этот бот, компании <b>Royal Dream 🚗</b>, принимает анкеты от водителей 👨\n"
